@@ -1,11 +1,12 @@
-# Collection of Top 10 DSA Code Snippets for Searching and Sorting
+# Collection of Top 16 DSA Code Snippets for Searching and Sorting (Intermediate Level)
+# Includes core algorithms plus advanced variants for sorting and binary search-based problems
 # Use for daily practice in coding challenges (e.g., LeetCode, HackerRank)
 
 # 1. Binary Search
 # Overview: Efficiently finds an element in a sorted array by dividing the search interval in half. Time: O(log n), Space: O(1).
 # Use Cases: Searching in sorted logs, finding insertion points in databases, or challenges like "Search in Rotated Sorted Array".
 # Why It's Useful: Core for any sorted data problem; variants handle edge cases like duplicates or rotations.
-def binary_search(arr,target):
+def binary_search(arr, target):
     left, right = 0, len(arr) - 1
     while left <= right:
         mid = left + (right - left) // 2
@@ -170,12 +171,167 @@ def bucket_sort(arr):
         sorted_arr.extend(sorted(bucket))  # Or use insertion_sort for small buckets
     return sorted_arr
 
+# 11. Counting Sort
+# Overview: Non-comparative sort for integers in a known range, counting occurrences. Time: O(n + k) where k is range, Space: O(k).
+# Use Cases: Sorting integers with small range (e.g., student scores), or as a subroutine in radix sort.
+# Why It's Useful: Linear time for constrained inputs; foundational for radix sort and histogram-based problems.
+def counting_sort(arr):
+    if not arr:
+        return arr
+    max_val = max(arr)
+    min_val = min(arr)
+    range_val = max_val - min_val + 1
+    count = [0] * range_val
+    output = [0] * len(arr)
+    
+    # Count occurrences
+    for num in arr:
+        count[num - min_val] += 1
+    
+    # Cumulative count
+    for i in range(1, range_val):
+        count[i] += count[i - 1]
+    
+    # Place elements in sorted order
+    for num in reversed(arr):
+        output[count[num - min_val] - 1] = num
+        count[num - min_val] -= 1
+    
+    return output
+
+# 12. Binary Search for First/Last Occurrence
+# Overview: Finds the first or last occurrence of a target in a sorted array with duplicates. Time: O(log n), Space: O(1).
+# Use Cases: Problems like "Find First and Last Position of Element in Sorted Array" or range queries in databases.
+# Why It's Useful: Extends binary search to handle duplicates; critical for boundary-related problems.
+def binary_search_first_last(arr, target, find_first=True):
+    left, right = 0, len(arr) - 1
+    result = -1
+    while left <= right:
+        mid = left + (right - left) // 2
+        if arr[mid] == target:
+            result = mid
+            if find_first:
+                right = mid - 1  # Continue searching left for first occurrence
+            else:
+                left = mid + 1   # Continue searching right for last occurrence
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+    return result
+
+# 13. TimSort (Simplified Hybrid of MergeSort and Insertion Sort)
+# Overview: Hybrid of merge sort and insertion sort, used in Python's sorted(). Time: O(n log n), Best: O(n), Space: O(n).
+# Use Cases: General-purpose sorting in production (e.g., Python’s sorted()), or "Sort Characters By Frequency".
+# Why It's Useful: Real-world relevance; teaches hybrid algorithms and adaptive sorting.
+def timsort(arr):
+    # Python's built-in sorted() uses TimSort; this is a simplified version
+    # Use insertion sort for small runs (threshold ~32 in practice)
+    RUN_SIZE = 32
+    def insertion_sort_run(arr, start, end):
+        for i in range(start + 1, end + 1):
+            key = arr[i]
+            j = i - 1
+            while j >= start and arr[j] > key:
+                arr[j + 1] = arr[j]
+                j -= 1
+            arr[j + 1] = key
+    
+    # Split into runs and sort with insertion sort
+    n = len(arr)
+    for i in range(0, n, RUN_SIZE):
+        insertion_sort_run(arr, i, min(i + RUN_SIZE - 1, n - 1))
+    
+    # Merge runs using merge function from merge_sort
+    size = RUN_SIZE
+    while size < n:
+        for left in range(0, n, size * 2):
+            mid = left + size - 1
+            right = min(left + size * 2 - 1, n - 1)
+            if mid < right:
+                merged = merge(arr[left:mid + 1], arr[mid + 1:right + 1])
+                arr[left:right + 1] = merged
+        size *= 2
+    return arr
+
+# 14. Binary Search on Rotated Sorted Array
+# Overview: Finds a target in a sorted array rotated at an unknown pivot. Time: O(log n), Space: O(1).
+# Use Cases: "Search in Rotated Sorted Array" (LeetCode #33), handling sorted arrays with rotation.
+# Why It's Useful: Common interview problem; tests adaptation of binary search.
+def search_rotated(arr, target):
+    left, right = 0, len(arr) - 1
+    while left <= right:
+        mid = left + (right - left) // 2
+        if arr[mid] == target:
+            return mid
+        if arr[left] <= arr[mid]:
+            if arr[left] <= target < arr[mid]:
+                right = mid - 1
+            else:
+                left = mid + 1
+        else:
+            if arr[mid] < target <= arr[right]:
+                left = mid + 1
+            else:
+                right = mid - 1
+    return -1  # Not found
+
+# 15. In-Place QuickSort
+# Overview: In-place version of QuickSort using partitioning. Average Time: O(n log n), Worst: O(n²), Space: O(log n).
+# Use Cases: Memory-efficient sorting in constrained environments, or "Sort List" variants.
+# Why It's Useful: Optimizes space compared to list-comprehension QuickSort; widely used in practice.
+def quicksort_inplace(arr, low=0, high=None):
+    if high is None:
+        high = len(arr) - 1
+    if low < high:
+        pi = partition(arr, low, high)
+        quicksort_inplace(arr, low, pi - 1)
+        quicksort_inplace(arr, pi + 1, high)
+    return arr
+
+def partition(arr, low, high):
+    pivot = arr[high]
+    i = low - 1
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i += 1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i + 1], arr[high] = arr[high], arr[i + 1]
+    return i + 1
+
+# 16. Cycle Sort
+# Overview: Sorts an array with minimal memory writes by finding cycles. Time: O(n²), Space: O(1).
+# Use Cases: Problems requiring minimal writes like "First Missing Positive" (LeetCode #41), or duplicate detection.
+# Why It's Useful: Niche for constraint-specific problems; teaches cycle-based sorting.
+def cycle_sort(arr):
+    n = len(arr)
+    for cycle_start in range(n - 1):
+        item = arr[cycle_start]
+        pos = cycle_start
+        for i in range(cycle_start + 1, n):
+            if arr[i] < item:
+                pos += 1
+        if pos == cycle_start:
+            continue
+        while item == arr[pos]:
+            pos += 1
+        arr[pos], item = item, arr[pos]
+        while pos != cycle_start:
+            pos = cycle_start
+            for i in range(cycle_start + 1, n):
+                if arr[i] < item:
+                    pos += 1
+            while item == arr[pos]:
+                pos += 1
+            arr[pos], item = item, arr[pos]
+    return arr
+
 # Example usage for testing (uncomment to run):
 
 if __name__ == "__main__":
     arr = [64, 34, 25, 12, 22, 11, 90]
     print("Binary Search:", binary_search([11, 12, 22, 25, 34, 64, 90], 25))  # Output: 3
-    print("QuickSort:", quicksort(arr.copy()))  # Output: [11, 12, 22, 25, 34, 64, 90]
+    print("QuickSort:", quicksort(arr.copy()))
     print("MergeSort:", merge_sort(arr.copy()))
     print("HeapSort:", heap_sort(arr.copy()))
     print("Insertion Sort:", insertion_sort(arr.copy()))
@@ -184,3 +340,10 @@ if __name__ == "__main__":
     print("Bubble Sort:", bubble_sort(arr.copy()))
     print("Radix Sort:", radix_sort([170, 45, 75, 90, 802, 24, 2, 66]))
     print("Bucket Sort:", bucket_sort([0.78, 0.17, 0.39, 0.26, 0.72, 0.94, 0.21]))
+    print("Counting Sort:", counting_sort([4, 2, 2, 8, 3, 3, 1]))
+    print("Binary Search First:", binary_search_first_last([5, 7, 7, 8, 8, 10], 8, True))  # Output: 3
+    print("Binary Search Last:", binary_search_first_last([5, 7, 7, 8, 8, 10], 8, False))  # Output: 4
+    print("TimSort:", timsort(arr.copy()))
+    print("Search Rotated:", search_rotated([4,5,6,7,0,1,2], 0))  # Output: 4
+    print("In-Place QuickSort:", quicksort_inplace(arr.copy()))
+    print("Cycle Sort:", cycle_sort([20, 40, 50, 10, 30]))
